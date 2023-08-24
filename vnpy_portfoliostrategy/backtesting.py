@@ -562,9 +562,9 @@ class BacktestingEngine:
 
             # Determine whether to get the historical data for the specified time of the contract
             if bar:
-                # Updated K-line for order summarization
+                # Updated bar for order summarization
                 self.bars[vt_symbol] = bar
-                # Cache K-line data for strategy.on_bars update
+                # Cache bar data for strategy.on_bars update
                 bars[vt_symbol] = bar
             # If you can't get it, but there's already a cache of contract data in the self.bars dictionary, use the previous data to populate it.
             elif vt_symbol in self.bars:

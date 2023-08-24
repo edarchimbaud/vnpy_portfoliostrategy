@@ -101,7 +101,7 @@ class PairTradingStrategy(StrategyTemplate):
 
     def on_bars(self, bars: Dict[str, BarData]) -> None:
         """Bar callback"""
-        # Get Option Leg K-Line
+        # Get Option Leg Bar
         leg1_bar = bars.get(self.leg1_symbol, None)
         leg2_bar = bars.get(self.leg2_symbol, None)
 

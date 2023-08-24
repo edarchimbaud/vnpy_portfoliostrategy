@@ -85,7 +85,7 @@ class PortfolioBollChannelStrategy(StrategyTemplate):
         self.pbg.update_bars(bars)
 
     def on_2hour_bars(self, bars: Dict[str, BarData]) -> None:
-        """2-hour K-line retracement"""
+        """2-hour bar retracement"""
         self.cancel_all()
 
         # Updating to a cached sequence

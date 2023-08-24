@@ -84,7 +84,7 @@ class TrendFollowingStrategy(StrategyTemplate):
 
     def on_bars(self, bars: Dict[str, BarData]) -> None:
         """Bar callback"""
-        # Update the K-line to calculate the RSI value
+        # Update the bar to calculate the RSI value
         for vt_symbol, bar in bars.items():
             am: ArrayManager = self.ams[vt_symbol]
             am.update_bar(bar)

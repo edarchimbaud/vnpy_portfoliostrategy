@@ -75,18 +75,18 @@ class PortfolioBarGenerator:
         self.last_dt = tick.datetime
 
     def update_bars(self, bars: Dict[str, BarData]) -> None:
-        """Updated one-minute K-line"""
+        """Updated one-minute bar"""
         if self.interval == Interval.MINUTE:
             self.update_bar_minute_window(bars)
         else:
             self.update_bar_hour_window(bars)
 
     def update_bar_minute_window(self, bars: Dict[str, BarData]) -> None:
-        """Updated N-minute K-line"""
+        """Updated N-minute bar"""
         for vt_symbol, bar in bars.items():
             window_bar: Optional[BarData] = self.window_bars.get(vt_symbol, None)
 
-            # If there is no N-minute K-line then create
+            # If there is no N-minute bar then create
             if not window_bar:
                 dt: datetime = bar.datetime.replace(second=0, microsecond=0)
                 window_bar = BarData(
@@ -100,7 +100,7 @@ class PortfolioBarGenerator:
                 )
                 self.window_bars[vt_symbol] = window_bar
 
-            # Update the highest and lowest price in the K-line
+            # Update the highest and lowest price in the bar
             else:
                 window_bar.high_price = max(window_bar.high_price, bar.high_price)
                 window_bar.low_price = min(window_bar.low_price, bar.low_price)
@@ -111,17 +111,17 @@ class PortfolioBarGenerator:
             window_bar.turnover += bar.turnover
             window_bar.open_interest = bar.open_interest
 
-        # Check if the K-line is synthesized
+        # Check if the bar is synthesized
         if not (bar.datetime.minute + 1) % self.window:
             self.on_window_bars(self.window_bars)
             self.window_bars = {}
 
     def update_bar_hour_window(self, bars: Dict[str, BarData]) -> None:
-        """Update Hourly K-Line"""
+        """Update Hourly Bar"""
         for vt_symbol, bar in bars.items():
             hour_bar: Optional[BarData] = self.hour_bars.get(vt_symbol, None)
 
-            # If there is no hourly K-line then create
+            # If there is no hourly bar then create
             if not hour_bar:
                 dt: datetime = bar.datetime.replace(minute=0, second=0, microsecond=0)
                 hour_bar = BarData(
@@ -140,7 +140,7 @@ class PortfolioBarGenerator:
                 self.hour_bars[vt_symbol] = hour_bar
 
             else:
-                # If a minute K-line is received at 59 minutes, update the hourly K-line and push the
+                # If a minute bar is received at 59 minutes, update the hourly bar and push the
                 if bar.datetime.minute == 59:
                     hour_bar.high_price = max(hour_bar.high_price, bar.high_price)
                     hour_bar.low_price = min(hour_bar.low_price, bar.low_price)
@@ -153,7 +153,7 @@ class PortfolioBarGenerator:
                     self.finished_hour_bars[vt_symbol] = hour_bar
                     self.hour_bars[vt_symbol] = None
 
-                # If a new hourly minute K-line is received, push the current hourly K-line directly
+                # If a new hourly minute bar is received, push the current hourly bar directly
                 elif bar.datetime.hour != hour_bar.datetime.hour:
                     self.finished_hour_bars[vt_symbol] = hour_bar
 
@@ -175,7 +175,7 @@ class PortfolioBarGenerator:
                     )
                     self.hour_bars[vt_symbol] = hour_bar
 
-                # Otherwise update the hourly K-line directly
+                # Otherwise update the hourly bar directly
                 else:
                     hour_bar.high_price = max(hour_bar.high_price, bar.high_price)
                     hour_bar.low_price = min(hour_bar.low_price, bar.low_price)
@@ -185,13 +185,13 @@ class PortfolioBarGenerator:
                     hour_bar.turnover += bar.turnover
                     hour_bar.open_interest = bar.open_interest
 
-        # Push the hourly K-line at the end of the synthesis
+        # Push the hourly bar at the end of the synthesis
         if self.finished_hour_bars:
             self.on_hour_bars(self.finished_hour_bars)
             self.finished_hour_bars = {}
 
     def on_hour_bars(self, bars: Dict[str, BarData]) -> None:
-        """Push Hourly K-Line"""
+        """Push Hourly Bar"""
         if self.window == 1:
             self.on_window_bars(bars)
         else:

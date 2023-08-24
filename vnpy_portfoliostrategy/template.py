@@ -234,7 +234,7 @@ class StrategyTemplate(ABC):
         """Execute a position trade based on the target"""
         self.cancel_all()
 
-        # Issues orders only for contracts with current K-slices.
+        # Issues orders only for contracts with current bars.
         for vt_symbol, bar in bars.items():
             # Calculate position spreads
             target: int = self.get_target(vt_symbol)
@@ -320,7 +320,7 @@ class StrategyTemplate(ABC):
         return self.strategy_engine.get_size(self, vt_symbol)
 
     def load_bars(self, days: int, interval: Interval = Interval.MINUTE) -> None:
-        """Load historical K-line data to perform initialization"""
+        """Load historical bar data to perform initialization"""
         self.strategy_engine.load_bars(self, days, interval)
 
     def put_event(self) -> None:

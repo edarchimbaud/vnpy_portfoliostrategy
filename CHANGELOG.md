@@ -19,7 +19,7 @@
 # Version 1.0.3
 
 1. Add position target transfer trading mode to the portfolio strategy template.
-2. Fix the error of backtesting profit/loss calculation caused by missing K-slice quotes in some cases.
+2. Fix the error of backtesting profit/loss calculation caused by missing bar quotes in some cases.
 
 # Version 1.0.2
 
