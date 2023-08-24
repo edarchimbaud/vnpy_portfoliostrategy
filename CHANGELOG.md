@@ -1,32 +1,32 @@
-# 1.0.6版本
+# Version 1.0.6
 
-1. 策略模板增加引擎类型查询函数get_engine_type
+1. Add engine type query function get_engine_type to policy templates.
 
-# 1.0.5版本
+# Version 1.0.5
 
-1. 增加回测爆仓检查
-2. 策略模板增加合约乘数查询函数get_size
-3. 加载日线和小时线数据时，不使用分段加载
-
-
-# 1.0.4版本
-
-1. 修复pos_data/target_data从缓存文件恢复数据，导致defaultdict变成dict的问题
-2. 改为使用OmsEngine提供的OffsetConverter组件
-3. 增加查询历史数据时的日志输出
+1. Add backtest burst check
+2. Strategy template to add contract multiplier query function get_size
+3. Load daily and hourly data without using segmented loading
 
 
-# 1.0.3版本
+# Version 1.0.4
 
-1. 组合策略模板，增加持仓目标调仓交易模式
-2. 修复部分情况下由于K线切片行情缺失，导致的回测计算盈亏错误
+1. Fix the problem that defaultdict becomes dict when pos_data/target_data is restored from cache file.
+2. Change to use OffsetConverter provided by OmsEngine.
+3. Add log output when querying historical data.
 
-# 1.0.2版本
 
-1. 使用zoneinfo替换pytz库
-2. 调整安装脚本setup.cfg，添加Python版本限制
+# Version 1.0.3
 
-# 1.0.1版本
+1. Add position target transfer trading mode to the portfolio strategy template.
+2. Fix the error of backtesting profit/loss calculation caused by missing K-slice quotes in some cases.
 
-1. 将模块的图标文件信息，改为完整路径字符串
-2. 改为使用PySide6风格的信号QtCore.Signal
+# Version 1.0.2
+
+1. Use zoneinfo to replace pytz library
+2. Adjust the installation script setup.cfg to add Python version restriction.
+
+# Version 1.0.1
+
+1. Change the icon file information of the module to the full path string.
+2. Change to use PySide6 style signal QtCore.

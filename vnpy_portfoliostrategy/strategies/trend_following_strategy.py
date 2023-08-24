@@ -10,9 +10,9 @@ from vnpy_portfoliostrategy.utility import PortfolioBarGenerator
 
 
 class TrendFollowingStrategy(StrategyTemplate):
-    """ATR-RSI趋势跟踪策略"""
+    """ATR-RSI Trend Following Strategy"""
 
-    author = "用Python的交易员"
+    author = "Trader in Python."
 
     atr_window = 22
     atr_ma_window = 10
@@ -32,21 +32,18 @@ class TrendFollowingStrategy(StrategyTemplate):
         "rsi_window",
         "rsi_entry",
         "trailing_percent",
-        "fixed_size"
+        "fixed_size",
     ]
-    variables = [
-        "rsi_buy",
-        "rsi_sell"
-    ]
+    variables = ["rsi_buy", "rsi_sell"]
 
     def __init__(
         self,
         strategy_engine: StrategyEngine,
         strategy_name: str,
         vt_symbols: List[str],
-        setting: dict
+        setting: dict,
     ) -> None:
-        """构造函数"""
+        """Constructor"""
         super().__init__(strategy_engine, strategy_name, vt_symbols, setting)
 
         self.rsi_data: Dict[str, float] = {}
@@ -65,8 +62,8 @@ class TrendFollowingStrategy(StrategyTemplate):
         self.pbg = PortfolioBarGenerator(self.on_bars)
 
     def on_init(self) -> None:
-        """策略初始化回调"""
-        self.write_log("策略初始化")
+        """Strategy initialization callback""""
+        self.write_log("Strategy initialized")
 
         self.rsi_buy = 50 + self.rsi_entry
         self.rsi_sell = 50 - self.rsi_entry
@@ -74,20 +71,20 @@ class TrendFollowingStrategy(StrategyTemplate):
         self.load_bars(10)
 
     def on_start(self) -> None:
-        """策略启动回调"""
-        self.write_log("策略启动")
+        """Strategy startup callback"""
+        self.write_log("Strategy activated")
 
     def on_stop(self) -> None:
-        """策略停止回调"""
-        self.write_log("策略停止")
+        """Strategy stop callback"""
+        self.write_log("Strategy stopped")
 
     def on_tick(self, tick: TickData) -> None:
-        """行情推送回调"""
+        """Strategy tick callback"""
         self.pbg.update_tick(tick)
 
     def on_bars(self, bars: Dict[str, BarData]) -> None:
-        """K线切片回调"""
-        # 更新K线计算RSI数值
+        """Bar callback"""
+        # Update the K-line to calculate the RSI value
         for vt_symbol, bar in bars.items():
             am: ArrayManager = self.ams[vt_symbol]
             am.update_bar(bar)
@@ -99,7 +96,7 @@ class TrendFollowingStrategy(StrategyTemplate):
 
             atr_array = am.atr(self.atr_window, array=True)
             self.atr_data[vt_symbol] = atr_array[-1]
-            self.atr_ma[vt_symbol] = atr_array[-self.atr_ma_window:].mean()
+            self.atr_ma[vt_symbol] = atr_array[-self.atr_ma_window :].mean()
             self.rsi_data[vt_symbol] = am.rsi(self.rsi_window)
 
             current_pos = self.get_pos(vt_symbol)
@@ -116,19 +113,27 @@ class TrendFollowingStrategy(StrategyTemplate):
                         self.set_target(vt_symbol, 0)
 
             elif current_pos > 0:
-                self.intra_trade_high[vt_symbol] = max(self.intra_trade_high[vt_symbol], bar.high_price)
+                self.intra_trade_high[vt_symbol] = max(
+                    self.intra_trade_high[vt_symbol], bar.high_price
+                )
                 self.intra_trade_low[vt_symbol] = bar.low_price
 
-                long_stop = self.intra_trade_high[vt_symbol] * (1 - self.trailing_percent / 100)
+                long_stop = self.intra_trade_high[vt_symbol] * (
+                    1 - self.trailing_percent / 100
+                )
 
                 if bar.close_price <= long_stop:
                     self.set_target(vt_symbol, 0)
 
             elif current_pos < 0:
-                self.intra_trade_low[vt_symbol] = min(self.intra_trade_low[vt_symbol], bar.low_price)
+                self.intra_trade_low[vt_symbol] = min(
+                    self.intra_trade_low[vt_symbol], bar.low_price
+                )
                 self.intra_trade_high[vt_symbol] = bar.high_price
 
-                short_stop = self.intra_trade_low[vt_symbol] * (1 + self.trailing_percent / 100)
+                short_stop = self.intra_trade_low[vt_symbol] * (
+                    1 + self.trailing_percent / 100
+                )
 
                 if bar.close_price >= short_stop:
                     self.set_target(vt_symbol, 0)
@@ -137,8 +142,10 @@ class TrendFollowingStrategy(StrategyTemplate):
 
         self.put_event()
 
-    def calculate_price(self, vt_symbol: str, direction: Direction, reference: float) -> float:
-        """计算调仓委托价格（支持按需重载实现）"""
+    def calculate_price(
+        self, vt_symbol: str, direction: Direction, reference: float
+    ) -> float:
+        """Calculation of transfer commission price (supports on-demand reloading implementation)"""
         if direction == Direction.LONG:
             price: float = reference + self.price_add
         else:

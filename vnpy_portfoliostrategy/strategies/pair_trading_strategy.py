@@ -11,9 +11,9 @@ from vnpy_portfoliostrategy import StrategyTemplate, StrategyEngine
 
 
 class PairTradingStrategy(StrategyTemplate):
-    """配对交易策略"""
+    """Pair trading strategy"""
 
-    author = "用Python的交易员"
+    author = "Trader in Python."
 
     tick_add = 1
     boll_window = 20
@@ -51,9 +51,9 @@ class PairTradingStrategy(StrategyTemplate):
         strategy_engine: StrategyEngine,
         strategy_name: str,
         vt_symbols: List[str],
-        setting: dict
+        setting: dict,
     ) -> None:
-        """构造函数"""
+        """Constructor"""
         super().__init__(strategy_engine, strategy_name, vt_symbols, setting)
 
         self.bgs: Dict[str, BarGenerator] = {}
@@ -73,25 +73,22 @@ class PairTradingStrategy(StrategyTemplate):
             self.bgs[vt_symbol] = BarGenerator(on_bar)
 
     def on_init(self) -> None:
-        """策略初始化回调"""
-        self.write_log("策略初始化")
+        """Strategy initialization callback"""
+        self.write_log("Strategy initialized")
 
         self.load_bars(1)
 
     def on_start(self) -> None:
-        """策略启动回调"""
-        self.write_log("策略启动")
+        """Strategy startup callback"""
+        self.write_log("Strategy activated")
 
     def on_stop(self) -> None:
-        """策略停止回调"""
-        self.write_log("策略停止")
+        """Strategy stop callback"""
+        self.write_log("Strategy stopped")
 
     def on_tick(self, tick: TickData) -> None:
-        """行情推送回调"""
-        if (
-            self.last_tick_time
-            and self.last_tick_time.minute != tick.datetime.minute
-        ):
+        """Strategy tick callback"""
+        if self.last_tick_time and self.last_tick_time.minute != tick.datetime.minute:
             bars = {}
             for vt_symbol, bg in self.bgs.items():
                 bars[vt_symbol] = bg.generate()
@@ -103,23 +100,26 @@ class PairTradingStrategy(StrategyTemplate):
         self.last_tick_time = tick.datetime
 
     def on_bars(self, bars: Dict[str, BarData]) -> None:
-        """K线切片回调"""
-        # 获取期权腿K线
+        """Bar callback"""
+        # Get Option Leg K-Line
         leg1_bar = bars.get(self.leg1_symbol, None)
         leg2_bar = bars.get(self.leg2_symbol, None)
 
-        # 必须两条期权腿行情都存在
+        # Both option leg quotes must be present
         if not leg1_bar or not leg2_bar:
             return
 
-        # 每5分钟运行一次
+        # Runs every 5 minutes
         if (leg1_bar.datetime.minute + 1) % 5:
             return
 
-        # 计算当前价差
-        self.current_spread = leg1_bar.close_price * self.leg1_ratio - leg2_bar.close_price * self.leg2_ratio
+        # Calculate the current spread
+        self.current_spread = (
+            leg1_bar.close_price * self.leg1_ratio
+            - leg2_bar.close_price * self.leg2_ratio
+        )
 
-        # 更新到价差序列
+        # Update to Spread Sequence
         self.spread_data[:-1] = self.spread_data[1:]
         self.spread_data[-1] = self.current_spread
 
@@ -127,15 +127,15 @@ class PairTradingStrategy(StrategyTemplate):
         if self.spread_count <= self.boll_window:
             return
 
-        # 计算布林带
-        buf: np.array = self.spread_data[-self.boll_window:]
+        # Calculating Bollinger Bands
+        buf: np.array = self.spread_data[-self.boll_window :]
 
         std = buf.std()
         self.boll_mid = buf.mean()
         self.boll_up = self.boll_mid + self.boll_dev * std
         self.boll_down = self.boll_mid - self.boll_dev * std
 
-        # 计算目标持仓
+        # Calculate target position
         leg1_pos = self.get_pos(self.leg1_symbol)
 
         if not leg1_pos:
@@ -154,14 +154,16 @@ class PairTradingStrategy(StrategyTemplate):
                 self.set_target(self.leg1_symbol, 0)
                 self.set_target(self.leg2_symbol, 0)
 
-        # 执行调仓交易
+        # Execution of position transfer transactions
         self.rebalance_portfolio(bars)
 
-        # 推送更新事件
+        # Push update events
         self.put_event()
 
-    def calculate_price(self, vt_symbol: str, direction: Direction, reference: float) -> float:
-        """计算调仓委托价格（支持按需重载实现）"""
+    def calculate_price(
+        self, vt_symbol: str, direction: Direction, reference: float
+    ) -> float:
+        """Calculation of transfer order price (supports on-demand reloading implementation)"""
         pricetick: float = self.get_pricetick(vt_symbol)
 
         if direction == Direction.LONG:

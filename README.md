@@ -1,4 +1,4 @@
-# VeighNa框架的投资组合策略模块
+# Portfolio Strategy Module for the VeighNa Framework
 
 <p align="center">
   <img src ="https://vnpy.oss-cn-shanghai.aliyuncs.com/vnpy-logo.png"/>
@@ -11,23 +11,23 @@
     <img src ="https://img.shields.io/github/license/vnpy/vnpy.svg?color=orange"/>
 </p>
 
-## 说明
+## Description
 
-针对多合约组合策略实盘的功能模块，用于实现策略历史回测、参数优化和实盘交易等任务。
+Functional module for live trading of multi-contract portfolio strategies, used to implement tasks such as historical backtesting, parameter optimization and live trading of the strategy.
 
-## 安装
+## Installation
 
-安装环境推荐基于3.3.0版本以上的【[**VeighNa Studio**](https://www.vnpy.com)】。
+The recommended installation environment is based on [[**VeighNa Studio**](https://edarchimbaud.com/veighna-website)] above version 3.3.0.
 
-直接使用pip命令：
+Use the pip command directly:
 
-```
+```bash
 pip install vnpy_portfoliostrategy
 ```
 
 
-或者下载源代码后，解压后在cmd中运行：
+Or download the source code, unzip it and run it in cmd:
 
-```
+```bash
 pip install .
 ```

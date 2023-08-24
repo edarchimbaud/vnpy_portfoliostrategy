@@ -9,9 +9,9 @@ from vnpy_portfoliostrategy import StrategyTemplate, StrategyEngine
 
 
 class PcpArbitrageStrategy(StrategyTemplate):
-    """期权平价套利策略"""
+    """Option Parity Arbitrage Strategy"""
 
-    author = "用Python的交易员"
+    author = "Trader in Python."
 
     entry_level = 20
     price_add = 5
@@ -28,11 +28,7 @@ class PcpArbitrageStrategy(StrategyTemplate):
     call_target = 0
     put_target = 0
 
-    parameters = [
-        "entry_level",
-        "price_add",
-        "fixed_size"
-    ]
+    parameters = ["entry_level", "price_add", "fixed_size"]
     variables = [
         "strike_price",
         "futures_price",
@@ -51,9 +47,9 @@ class PcpArbitrageStrategy(StrategyTemplate):
         strategy_engine: StrategyEngine,
         strategy_name: str,
         vt_symbols: List[str],
-        setting: dict
+        setting: dict,
     ) -> None:
-        """构造函数"""
+        """Constructor"""
         super().__init__(strategy_engine, strategy_name, vt_symbols, setting)
 
         self.bgs: Dict[str, BarGenerator] = {}
@@ -65,7 +61,7 @@ class PcpArbitrageStrategy(StrategyTemplate):
 
             if "C" in symbol:
                 self.call_symbol = vt_symbol
-                _, strike_str = symbol.split("-C-")     # CFFEX/DCE
+                _, strike_str = symbol.split("-C-")  # CFFEX/DCE
                 self.strike_price = int(strike_str)
             elif "P" in symbol:
                 self.put_symbol = vt_symbol
@@ -79,25 +75,22 @@ class PcpArbitrageStrategy(StrategyTemplate):
             self.bgs[vt_symbol] = BarGenerator(on_bar)
 
     def on_init(self) -> None:
-        """策略初始化回调"""
-        self.write_log("策略初始化")
+        """Strategy initialization callback""""
+        self.write_log("Strategy initialized")
 
         self.load_bars(1)
 
     def on_start(self) -> None:
-        """策略启动回调"""
-        self.write_log("策略启动")
+        """Strategy startup callback"""
+        self.write_log("Strategy activated")
 
     def on_stop(self) -> None:
-        """策略停止回调"""
-        self.write_log("策略停止")
+        """Strategy stop callback"""
+        self.write_log("Strategy stopped")
 
     def on_tick(self, tick: TickData):
-        """行情推送回调"""
-        if (
-            self.last_tick_time
-            and self.last_tick_time.minute != tick.datetime.minute
-        ):
+        """Strategy tick callback"""
+        if self.last_tick_time and self.last_tick_time.minute != tick.datetime.minute:
             bars = {}
             for vt_symbol, bg in self.bgs.items():
                 bars[vt_symbol] = bg.generate()
@@ -109,19 +102,21 @@ class PcpArbitrageStrategy(StrategyTemplate):
         self.last_tick_time = tick.datetime
 
     def on_bars(self, bars: Dict[str, BarData]) -> None:
-        """K线切片回调"""
+        """Bar callback"""
         self.cancel_all()
 
-        # 计算PCP价差
+        # Calculating the PCP Spread
         call_bar = bars[self.call_symbol]
         put_bar = bars[self.put_symbol]
         futures_bar = bars[self.futures_symbol]
 
         self.futures_price = futures_bar.close_price
-        self.synthetic_price = call_bar.close_price - put_bar.close_price + self.strike_price
+        self.synthetic_price = (
+            call_bar.close_price - put_bar.close_price + self.strike_price
+        )
         self.current_spread = self.synthetic_price - self.futures_price
 
-        # 计算目标仓位
+        # Calculate target position
         futures_target: int = self.get_target(self.futures_symbol)
 
         if not futures_target:
@@ -144,10 +139,10 @@ class PcpArbitrageStrategy(StrategyTemplate):
                 self.set_target(self.put_symbol, 0)
                 self.set_target(self.futures_symbol, 0)
 
-        # 执行调仓交易
+        # Execution of position transfer transactions
         self.rebalance_portfolio()
 
-        # 更新策略状态
+        # Update strategy status
         self.call_pos = self.get_pos(self.call_symbol)
         self.put_pos = self.get_pos(self.put_symbol)
         self.futures_pos = self.get_pos(self.futures_symbol)
@@ -158,8 +153,10 @@ class PcpArbitrageStrategy(StrategyTemplate):
 
         self.put_event()
 
-    def calculate_price(self, vt_symbol: str, direction: Direction, reference: float) -> float:
-        """计算调仓委托价格（支持按需重载实现）"""
+    def calculate_price(
+        self, vt_symbol: str, direction: Direction, reference: float
+    ) -> float:
+        """Calculation of transfer commission price (supports on-demand reloading implementation)"""
         if direction == Direction.LONG:
             price: float = reference + self.price_add
         else:

@@ -5,16 +5,16 @@ from vnpy.trader.object import BarData, TickData, Interval
 
 
 class PortfolioBarGenerator:
-    """组合K线生成器"""
+    """Portforlio Bar Generator"""
 
     def __init__(
         self,
         on_bars: Callable,
         window: int = 0,
         on_window_bars: Callable = None,
-        interval: Interval = Interval.MINUTE
+        interval: Interval = Interval.MINUTE,
     ) -> None:
-        """构造函数"""
+        """Constructor"""
         self.on_bars: Callable = on_bars
 
         self.interval: Interval = interval
@@ -33,7 +33,7 @@ class PortfolioBarGenerator:
         self.last_dt: datetime = None
 
     def update_tick(self, tick: TickData) -> None:
-        """更新行情切片数据"""
+        """Updating Sliced Quotation Data"""
         if not tick.last_price:
             return
 
@@ -56,7 +56,7 @@ class PortfolioBarGenerator:
                 high_price=tick.last_price,
                 low_price=tick.last_price,
                 close_price=tick.last_price,
-                open_interest=tick.open_interest
+                open_interest=tick.open_interest,
             )
             self.bars[bar.vt_symbol] = bar
         else:
@@ -75,18 +75,18 @@ class PortfolioBarGenerator:
         self.last_dt = tick.datetime
 
     def update_bars(self, bars: Dict[str, BarData]) -> None:
-        """更新一分钟K线"""
+        """Updated one-minute K-line"""
         if self.interval == Interval.MINUTE:
             self.update_bar_minute_window(bars)
         else:
             self.update_bar_hour_window(bars)
 
     def update_bar_minute_window(self, bars: Dict[str, BarData]) -> None:
-        """更新N分钟K线"""
+        """Updated N-minute K-line"""
         for vt_symbol, bar in bars.items():
             window_bar: Optional[BarData] = self.window_bars.get(vt_symbol, None)
 
-            # 如果没有N分钟K线则创建
+            # If there is no N-minute K-line then create
             if not window_bar:
                 dt: datetime = bar.datetime.replace(second=0, microsecond=0)
                 window_bar = BarData(
@@ -96,38 +96,32 @@ class PortfolioBarGenerator:
                     gateway_name=bar.gateway_name,
                     open_price=bar.open_price,
                     high_price=bar.high_price,
-                    low_price=bar.low_price
+                    low_price=bar.low_price,
                 )
                 self.window_bars[vt_symbol] = window_bar
 
-            # 更新K线内最高价及最低价
+            # Update the highest and lowest price in the K-line
             else:
-                window_bar.high_price = max(
-                    window_bar.high_price,
-                    bar.high_price
-                )
-                window_bar.low_price = min(
-                    window_bar.low_price,
-                    bar.low_price
-                )
+                window_bar.high_price = max(window_bar.high_price, bar.high_price)
+                window_bar.low_price = min(window_bar.low_price, bar.low_price)
 
-            # 更新K线内收盘价、数量、成交额、持仓量
+            # Update closing price, quantity, turnover, position within K line
             window_bar.close_price = bar.close_price
             window_bar.volume += bar.volume
             window_bar.turnover += bar.turnover
             window_bar.open_interest = bar.open_interest
 
-        # 检查K线是否合成完毕
+        # Check if the K-line is synthesized
         if not (bar.datetime.minute + 1) % self.window:
             self.on_window_bars(self.window_bars)
             self.window_bars = {}
 
     def update_bar_hour_window(self, bars: Dict[str, BarData]) -> None:
-        """更新小时K线"""
+        """Update Hourly K-Line"""
         for vt_symbol, bar in bars.items():
             hour_bar: Optional[BarData] = self.hour_bars.get(vt_symbol, None)
 
-            # 如果没有小时K线则创建
+            # If there is no hourly K-line then create
             if not hour_bar:
                 dt: datetime = bar.datetime.replace(minute=0, second=0, microsecond=0)
                 hour_bar = BarData(
@@ -141,21 +135,15 @@ class PortfolioBarGenerator:
                     close_price=bar.close_price,
                     volume=bar.volume,
                     turnover=bar.turnover,
-                    open_interest=bar.open_interest
+                    open_interest=bar.open_interest,
                 )
                 self.hour_bars[vt_symbol] = hour_bar
 
             else:
-                # 如果收到59分的分钟K线，更新小时K线并推送
+                # If a minute K-line is received at 59 minutes, update the hourly K-line and push the
                 if bar.datetime.minute == 59:
-                    hour_bar.high_price = max(
-                        hour_bar.high_price,
-                        bar.high_price
-                    )
-                    hour_bar.low_price = min(
-                        hour_bar.low_price,
-                        bar.low_price
-                    )
+                    hour_bar.high_price = max(hour_bar.high_price, bar.high_price)
+                    hour_bar.low_price = min(hour_bar.low_price, bar.low_price)
 
                     hour_bar.close_price = bar.close_price
                     hour_bar.volume += bar.volume
@@ -165,11 +153,13 @@ class PortfolioBarGenerator:
                     self.finished_hour_bars[vt_symbol] = hour_bar
                     self.hour_bars[vt_symbol] = None
 
-                # 如果收到新的小时的分钟K线，直接推送当前的小时K线
+                # If a new hourly minute K-line is received, push the current hourly K-line directly
                 elif bar.datetime.hour != hour_bar.datetime.hour:
                     self.finished_hour_bars[vt_symbol] = hour_bar
 
-                    dt: datetime = bar.datetime.replace(minute=0, second=0, microsecond=0)
+                    dt: datetime = bar.datetime.replace(
+                        minute=0, second=0, microsecond=0
+                    )
                     hour_bar = BarData(
                         symbol=bar.symbol,
                         exchange=bar.exchange,
@@ -181,33 +171,27 @@ class PortfolioBarGenerator:
                         close_price=bar.close_price,
                         volume=bar.volume,
                         turnover=bar.turnover,
-                        open_interest=bar.open_interest
+                        open_interest=bar.open_interest,
                     )
                     self.hour_bars[vt_symbol] = hour_bar
 
-                # 否则直接更新小时K线
+                # Otherwise update the hourly K-line directly
                 else:
-                    hour_bar.high_price = max(
-                        hour_bar.high_price,
-                        bar.high_price
-                    )
-                    hour_bar.low_price = min(
-                        hour_bar.low_price,
-                        bar.low_price
-                    )
+                    hour_bar.high_price = max(hour_bar.high_price, bar.high_price)
+                    hour_bar.low_price = min(hour_bar.low_price, bar.low_price)
 
                     hour_bar.close_price = bar.close_price
                     hour_bar.volume += bar.volume
                     hour_bar.turnover += bar.turnover
                     hour_bar.open_interest = bar.open_interest
 
-        # 推送合成完毕的小时K线
+        # Push the hourly K-line at the end of the synthesis
         if self.finished_hour_bars:
             self.on_hour_bars(self.finished_hour_bars)
             self.finished_hour_bars = {}
 
     def on_hour_bars(self, bars: Dict[str, BarData]) -> None:
-        """推送小时K线"""
+        """Push Hourly K-Line"""
         if self.window == 1:
             self.on_window_bars(bars)
         else:
@@ -221,18 +205,12 @@ class PortfolioBarGenerator:
                         gateway_name=bar.gateway_name,
                         open_price=bar.open_price,
                         high_price=bar.high_price,
-                        low_price=bar.low_price
+                        low_price=bar.low_price,
                     )
                     self.window_bars[vt_symbol] = window_bar
                 else:
-                    window_bar.high_price = max(
-                        window_bar.high_price,
-                        bar.high_price
-                    )
-                    window_bar.low_price = min(
-                        window_bar.low_price,
-                        bar.low_price
-                    )
+                    window_bar.high_price = max(window_bar.high_price, bar.high_price)
+                    window_bar.low_price = min(window_bar.low_price, bar.low_price)
 
                 window_bar.close_price = bar.close_price
                 window_bar.volume += bar.volume
